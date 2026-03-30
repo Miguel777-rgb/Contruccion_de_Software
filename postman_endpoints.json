@@ -1,0 +1,175 @@
+{
+  "info": {
+    "name": "API Construcción de Software",
+    "description": "Endpoints para el sistema de usuarios y tareas",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Tareas",
+      "item": [
+        {
+          "name": "1. Obtener todas las tareas",
+          "request": {
+            "method": "GET",
+            "url": "http://127.0.0.1:5000/tasks"
+          }
+        },
+        {
+          "name": "2. Obtener tarea por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://127.0.0.1:5000/tasks/1"
+          }
+        },
+        {
+          "name": "3. Crear tarea",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"Nueva tarea\",\n    \"done\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "http://127.0.0.1:5000/tasks"
+          }
+        },
+        {
+          "name": "4. Actualizar tarea",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"content\": \"Tarea actualizada\",\n    \"done\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "http://127.0.0.1:5000/tasks/1"
+          }
+        },
+        {
+          "name": "5. Eliminar tarea",
+          "request": {
+            "method": "DELETE",
+            "url": "http://127.0.0.1:5000/tasks/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Usuarios",
+      "item": [
+        {
+          "name": "1. Obtener todos los usuarios",
+          "request": {
+            "method": "GET",
+            "url": "http://127.0.0.1:5000/users"
+          }
+        },
+        {
+          "name": "2. Obtener usuario por ID",
+          "request": {
+            "method": "GET",
+            "url": "http://127.0.0.1:5000/users/1"
+          }
+        },
+        {
+          "name": "3. Crear Usuario (Ejemplo genérico)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Juan\",\n    \"lastname\": \"Pérez\",\n    \"address\": {\n        \"city\": \"Madrid\",\n        \"country\": \"España\",\n        \"postal_code\": \"28001\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "http://127.0.0.1:5000/users"
+          }
+        },
+        {
+          "name": "4. Actualizar usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Juan Actualizado\",\n    \"lastname\": \"Pérez Actualizado\",\n    \"address\": {\n        \"city\": \"Barcelona\",\n        \"country\": \"España\",\n        \"postal_code\": \"08001\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "http://127.0.0.1:5000/users/1"
+          }
+        },
+        {
+          "name": "5. Eliminar usuario",
+          "request": {
+            "method": "DELETE",
+            "url": "http://127.0.0.1:5000/users/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Misceláneos",
+      "item": [
+        {
+          "name": "1. Home",
+          "request": {
+            "method": "GET",
+            "url": "http://127.0.0.1:5000/"
+          }
+        },
+        {
+          "name": "2. About",
+          "request": {
+            "method": "GET",
+            "url": "http://127.0.0.1:5000/about"
+          }
+        },
+        {
+          "name": "3. Hello - Igor",
+          "request": {
+            "method": "GET",
+            "url": "http://127.0.0.1:5000/hello/Igor"
+          }
+        }
+      ]
+    }
+  ]
+}
