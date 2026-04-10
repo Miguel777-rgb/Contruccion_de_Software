@@ -9,17 +9,27 @@
       "name": "Tareas",
       "item": [
         {
-          "name": "1. Obtener todas las tareas",
+          "name": "1. Obtener todas las tareas (con paginación)",
           "request": {
             "method": "GET",
-            "url": "http://127.0.0.1:5000/tasks"
+            "url": "http://127.0.0.1:5000/tasks?page=1&limit=20",
+            "description": "Obtiene todas las tareas activas (no soft-deleted) con paginación. Por defecto: page=1, limit=20 (máximo 100)"
+          }
+        },
+        {
+          "name": "1b. Obtener tareas con búsqueda",
+          "request": {
+            "method": "GET",
+            "url": "http://127.0.0.1:5000/tasks?query=DB&page=1&limit=10",
+            "description": "Busca tareas cuyo contenido contenga 'DB' (case-insensitive). Utiliza LIKE para coincidencias parciales."
           }
         },
         {
           "name": "2. Obtener tarea por ID",
           "request": {
             "method": "GET",
-            "url": "http://127.0.0.1:5000/tasks/1"
+            "url": "http://127.0.0.1:5000/tasks/1",
+            "description": "Obtiene una tarea específica por su ID. No devuelve tareas soft-deleted."
           }
         },
         {
@@ -41,11 +51,12 @@
                 }
               }
             },
-            "url": "http://127.0.0.1:5000/tasks"
+            "url": "http://127.0.0.1:5000/tasks",
+            "description": "Crea una nueva tarea en la base de datos MySQL. La tarea se guarda con timestamps UTC timezone-aware."
           }
         },
         {
-          "name": "4. Actualizar tarea",
+          "name": "4. Actualizar tarea (marcar como completada)",
           "request": {
             "method": "PUT",
             "header": [
@@ -63,14 +74,16 @@
                 }
               }
             },
-            "url": "http://127.0.0.1:5000/tasks/1"
+            "url": "http://127.0.0.1:5000/tasks/1",
+            "description": "Actualiza el contenido y estado de una tarea. No se puede actualizar tareas soft-deleted."
           }
         },
         {
-          "name": "5. Eliminar tarea",
+          "name": "5. Eliminar tarea (Soft Delete)",
           "request": {
             "method": "DELETE",
-            "url": "http://127.0.0.1:5000/tasks/1"
+            "url": "http://127.0.0.1:5000/tasks/1",
+            "description": "Realiza soft delete: marca la tarea con deleted_at timestamp en lugar de borrarla. Los datos se conservan en la BD para auditoría."
           }
         }
       ]
