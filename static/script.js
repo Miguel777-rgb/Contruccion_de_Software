@@ -1,5 +1,35 @@
 const API_URL = window.location.origin;
 
+// Load available users for task creation and editing
+let availableUsers = [];
+async function loadAvailableUsers() {
+    try {
+        const response = await fetch(`${API_URL}/users/available/list`);
+        const data = await response.json();
+        availableUsers = data.users || [];
+        
+        // Update user selector for creating tasks
+        const userSelect = document.getElementById('taskUserId');
+        if (userSelect) {
+            userSelect.innerHTML = '<option value="">-- Seleccionar Usuario --</option>';
+            availableUsers.forEach(user => {
+                userSelect.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+            });
+        }
+        
+        // Update user selector for editing tasks
+        const editUserSelect = document.getElementById('editTaskUserId');
+        if (editUserSelect) {
+            editUserSelect.innerHTML = '<option value="">-- Seleccionar Usuario --</option>';
+            availableUsers.forEach(user => {
+                editUserSelect.innerHTML += `<option value="${user.id}">${user.name}</option>`;
+            });
+        }
+    } catch (error) {
+        console.log('Error cargando usuarios disponibles:', error);
+    }
+}
+
 // TASKS FUNCTIONS
 async function loadTasks() {
     try {
@@ -12,14 +42,17 @@ async function loadTasks() {
             return;
         }
 
-        tasksList.innerHTML = data.tasks.map(task => `
+        tasksList.innerHTML = data.tasks.map(task => {
+            const assignedUser = availableUsers.find(u => u.id === task.user_id);
+            return `
             <div class="item">
                 <div class="item-info">
                     <div class="item-title">${task.content}</div>
                     <div class="item-desc">ID: ${task.id} | ${task.done ? '<i class="fas fa-check-circle"></i> Completada' : '<i class="fas fa-hourglass-start"></i> Pendiente'}</div>
+                    <div class="item-desc"><i class="fas fa-user"></i> Encargado: ${assignedUser ? assignedUser.name : 'No asignado'}</div>
                 </div>
                 <div class="item-actions">
-                    <button class="btn-warning" onclick="openEditTaskModal(${task.id}, '${task.content.replace(/'/g, "\\'")}', ${task.done})">
+                    <button class="btn-warning" onclick="openEditTaskModal(${task.id}, '${task.content.replace(/'/g, "\\'")}', ${task.done}, ${task.user_id})">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn-warning" onclick="toggleTask(${task.id}, ${!task.done})">
@@ -28,7 +61,8 @@ async function loadTasks() {
                     <button class="btn-danger" onclick="deleteTask(${task.id})"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
     } catch (error) {
         showMessage('tasksMessage', 'Error cargando tareas: ' + error.message, 'error', 'fas fa-warning');
     }
@@ -36,8 +70,15 @@ async function loadTasks() {
 
 async function createTask() {
     const content = document.getElementById('taskContent').value.trim();
+    const user_id = document.getElementById('taskUserId').value;
+    
     if (!content) {
         showMessage('tasksMessage', 'Por favor escriba algo en la tarea', 'error', 'fas fa-warning');
+        return;
+    }
+    
+    if (!user_id) {
+        showMessage('tasksMessage', 'Por favor seleccione un usuario', 'error', 'fas fa-warning');
         return;
     }
 
@@ -45,13 +86,18 @@ async function createTask() {
         const response = await fetch(`${API_URL}/tasks`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content, done: false })
+            body: JSON.stringify({ 
+                user_id: parseInt(user_id), 
+                content, 
+                done: false 
+            })
         });
         const data = await response.json();
 
         if (response.ok) {
             showMessage('tasksMessage', 'Tarea creada correctamente', 'success', 'fas fa-check-circle');
             document.getElementById('taskContent').value = '';
+            document.getElementById('taskUserId').value = '';
             loadTasks();
         } else {
             showMessage('tasksMessage', 'Error: ' + data.error, 'error', 'fas fa-warning');
@@ -104,20 +150,23 @@ async function loadUsers() {
         usersList.innerHTML = data.users.map(user => `
             <div class="item">
                 <div class="item-info">
-                    <div class="item-title">${user.name} ${user.lastname}</div>
+                    <div class="item-title">${user.name} ${user.lastname || ''}</div>
                     <div class="item-desc">ID: ${user.id}</div>
                     <div class="address-section">
-                        <i class="fas fa-map-marker-alt"></i> ${user.address.city}, ${user.address.country} (${user.address.postal_code})
+                        <i class="fas fa-map-marker-alt"></i> ${user.city || ''}, ${user.country || ''} (${user.postal_code || ''})
                     </div>
                 </div>
                 <div class="item-actions">
-                    <button class="btn-warning" onclick="openEditUserModal(${user.id}, '${user.name.replace(/'/g, "\\'")}', '${user.lastname.replace(/'/g, "\\'")}', '${user.address.city.replace(/'/g, "\\'")}', '${user.address.country.replace(/'/g, "\\'")}', '${user.address.postal_code}')">
+                    <button class="btn-warning" onclick="openEditUserModal(${user.id}, '${user.name.replace(/'/g, "\\'")}', '${(user.lastname || '').replace(/'/g, "\\'")}', '${(user.city || '').replace(/'/g, "\\'")}', '${(user.country || '').replace(/'/g, "\\'")}', '${user.postal_code || ''}')">
                         <i class="fas fa-edit"></i>
                     </button>
                     <button class="btn-danger" onclick="deleteUser(${user.id})"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
         `).join('');
+        
+        // Reload available users for task selection
+        loadAvailableUsers();
     } catch (error) {
         showMessage('usersMessage', 'Error cargando usuarios: ' + error.message, 'error', 'fas fa-warning');
     }
@@ -130,12 +179,12 @@ async function createUser() {
     const country = document.getElementById('userCountry').value.trim();
     const postal_code = document.getElementById('userPostalCode').value.trim();
 
-    if (!name || !lastname || !city || !country || !postal_code) {
-        showMessage('usersMessage', 'Por favor rellene todos los campos', 'error', 'fas fa-warning');
+    if (!name) {
+        showMessage('usersMessage', 'Por favor ingrese un nombre', 'error', 'fas fa-warning');
         return;
     }
 
-    if (!/^\d{5}$/.test(postal_code)) {
+    if (postal_code && !/^\d{5}$/.test(postal_code)) {
         showMessage('usersMessage', 'El código postal debe tener exactamente 5 dígitos', 'error', 'fas fa-warning');
         return;
     }
@@ -145,8 +194,7 @@ async function createUser() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                name, lastname,
-                address: { city, country, postal_code }
+                name, lastname, city, country, postal_code
             })
         });
         const data = await response.json();
@@ -205,25 +253,35 @@ function showMessage(elementId, message, type, iconClass = null) {
 
 // EDIT TASK FUNCTIONS
 let currentEditTaskId = null;
+let currentEditTaskUserId = null;
 
-function openEditTaskModal(taskId, content, done) {
+function openEditTaskModal(taskId, content, done, userId) {
     currentEditTaskId = taskId;
+    currentEditTaskUserId = userId;
     document.getElementById('editTaskContent').value = content;
     document.getElementById('editTaskDone').value = done;
+    document.getElementById('editTaskUserId').value = userId;
     document.getElementById('editTaskModal').style.display = 'block';
 }
 
 function closeEditTaskModal() {
     document.getElementById('editTaskModal').style.display = 'none';
     currentEditTaskId = null;
+    currentEditTaskUserId = null;
 }
 
 async function saveEditTask() {
     const content = document.getElementById('editTaskContent').value.trim();
     const done = document.getElementById('editTaskDone').value === 'true';
+    const user_id = parseInt(document.getElementById('editTaskUserId').value);
 
     if (!content) {
         showMessage('tasksMessage', 'El contenido no puede estar vacío', 'error', 'fas fa-warning');
+        return;
+    }
+
+    if (!user_id || user_id <= 0) {
+        showMessage('tasksMessage', 'Debe seleccionar un usuario', 'error', 'fas fa-warning');
         return;
     }
 
@@ -231,7 +289,7 @@ async function saveEditTask() {
         const response = await fetch(`${API_URL}/tasks/${currentEditTaskId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ content, done })
+            body: JSON.stringify({ content, done, user_id })
         });
         
         if (response.ok) {
@@ -272,12 +330,12 @@ async function saveEditUser() {
     const country = document.getElementById('editUserCountry').value.trim();
     const postal_code = document.getElementById('editUserPostalCode').value.trim();
 
-    if (!name || !lastname || !city || !country || !postal_code) {
-        showMessage('usersMessage', 'Por favor rellene todos los campos', 'error', 'fas fa-warning');
+    if (!name) {
+        showMessage('usersMessage', 'Por favor ingrese un nombre', 'error', 'fas fa-warning');
         return;
     }
 
-    if (!/^\d{5}$/.test(postal_code)) {
+    if (postal_code && !/^\d{5}$/.test(postal_code)) {
         showMessage('usersMessage', 'El código postal debe tener exactamente 5 dígitos', 'error', 'fas fa-warning');
         return;
     }
@@ -287,8 +345,7 @@ async function saveEditUser() {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                name, lastname,
-                address: { city, country, postal_code }
+                name, lastname, city, country, postal_code
             })
         });
 
@@ -319,6 +376,7 @@ window.onclick = function(event) {
 
 // Load data on startup
 window.addEventListener('load', () => {
+    loadAvailableUsers();
     loadTasks();
     loadUsers();
 });
